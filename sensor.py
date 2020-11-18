@@ -57,9 +57,10 @@ class PersistPersistentNotifications(RestoreEntity):
         """When sensor is added to hassio."""
         await super().async_added_to_hass()
         prev_state = await self.async_get_last_state()
-        self._state = prev_state.state
-        if "persistent_messages" in prev_state.attributes:
-            self.attr = prev_state.as_dict()["attributes"]
+        if prev_state is not None:
+            self._state = prev_state.state
+            if "persistent_messages" in prev_state.attributes:
+                self.attr = prev_state.as_dict()["attributes"]
                 
         _LOGGER.debug("restor state: %s", prev_state)
         if DOMAIN not in self.hass.data:
