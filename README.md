@@ -7,4 +7,7 @@ The persistent notification will be saved in a new sensor `sensor.persist_persis
 - Restart Home Assistant
 
 # Configuration
-No configuration
+- In the UI, go in Configuration > Integration
+- Click on the '+' button
+- Search for "Persist Persistent Notifications"
+- Confirm
