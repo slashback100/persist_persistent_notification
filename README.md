@@ -1,2 +1,2 @@
-# Persist the persistent notification after shutdown
+# Persist the persistent notification after Home Assistant shutdown
 
