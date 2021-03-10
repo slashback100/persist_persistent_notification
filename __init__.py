@@ -21,8 +21,11 @@ async def async_setup_entry(hass, entry):
     hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, SENSOR_PLATFORM))
 
     def erase_and_save_notifications(event):
-        hass.data[DOMAIN][SENSOR_PLATFORM][SENSOR].reset_persistent_notifications()
-        save_notifications(event)
+        try:
+          hass.data[DOMAIN][SENSOR_PLATFORM][SENSOR].reset_persistent_notifications()
+          save_notifications(event)
+        except:
+          pass
 
     def save_notifications(event):
         """ retrieve the persistent notification and store them in the sensor """
