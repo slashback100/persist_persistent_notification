@@ -30,8 +30,8 @@ class PersistPersistentNotifications(RestoreEntity):
         self.hass = hass
         self.attr={}
         self._state = "0"
-        self.attr["persistent_messages"] = []
         PersistPersistentNotifications.instances += 1
+        self.attr["persistent_messages"] = []
 
     @property
     def name(self):
@@ -41,6 +41,11 @@ class PersistPersistentNotifications(RestoreEntity):
     def state(self):
         """Return the state of the switch"""
         return self._state
+
+    @property
+    def extra_state_attributes(self):
+        """Returns the attributes list"""
+        return self.attr
 
     async def async_update(self):
         pass
@@ -62,13 +67,14 @@ class PersistPersistentNotifications(RestoreEntity):
             if "persistent_messages" in prev_state.attributes:
                 self.attr = prev_state.as_dict()["attributes"]
                 
-        _LOGGER.debug("restor state: %s", prev_state)
+        _LOGGER.debug("restore state: %s", prev_state)
         if DOMAIN not in self.hass.data:
             self.hass.data[DOMAIN] = {}
         if SENSOR_PLATFORM not in self.hass.data[DOMAIN]:
             self.hass.data[DOMAIN][SENSOR_PLATFORM] = {}
         self.hass.data[DOMAIN][SENSOR_PLATFORM][SENSOR] = self
 
+        #the creation of the notif is done in __init__ restore_notifications
         for pn in self.persistent_notifications:
             service_data = {}
             service_data["message"] = pn["message"]
@@ -81,20 +87,25 @@ class PersistPersistentNotifications(RestoreEntity):
     def _schedule_immediate_update(self):
         self.async_schedule_update_ha_state(True)
 
-    def async_add_persistent_notification(self, persistent_notification):
-        self.attr["persistent_messages"].append(persistent_notification)
+    async def async_add_persistent_notification(self, persistent_notification):
         self._state += 1
+        try:
+            _LOGGER.debug("Adding persistent notification: " + persistent_notification["message"])
+            self.attr["persistent_messages"].append(persistent_notification)
+        except Exception as err: 
+            _LOGGER.error("Oups, error is" + str(err))
+            
 
     @property
     def persistent_notifications(self):
         return self.attr["persistent_messages"]
 
     def reset_persistent_notifications(self):
-        self.attr["persistent_messages"] = []
+        self.attr["persistent_messages"].clear()
         self._state = 0
 
 
-    def is_new(self, notification):
+    async def is_new(self, notification):
         if "notification_id" in notification is not None:
             for notif in self.attr["persistent_messages"]:
                 #await asyncio.sleep(0)

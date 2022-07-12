@@ -18,28 +18,42 @@ def setup(hass, config):
 async def async_setup_entry(hass, entry):
     """Set up this component using YAML."""
     #init the sensor entity
+    _LOGGER.debug("in __init__ : async_setup_entry")
     hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, SENSOR_PLATFORM))
 
-    def erase_and_save_notifications(event):
+    async def erase_and_save_notifications(event):
         try:
           hass.data[DOMAIN][SENSOR_PLATFORM][SENSOR].reset_persistent_notifications()
-          save_notifications(event)
+          await save_notifications(event)
+        except Exception as err: 
+          _LOGGER.error("Error is" + str(err))
+          raise
         except:
-          pass
+          _LOGGER.error("Oups")
+          raise
 
-    def save_notifications(event):
+    async def save_notifications(event):
         """ retrieve the persistent notification and store them in the sensor """
         _LOGGER.debug("saving persistent notification")
         sensor = hass.data[DOMAIN][SENSOR_PLATFORM][SENSOR]
-        for pn_id in hass.states.entity_ids("persistent_notification"):
-            pn = hass.states.get(pn_id)
-            if sensor.is_new(pn.attributes):
-                sensor.async_add_persistent_notification(pn.as_dict()["attributes"])
-            #else:
-            #    await asyncio.sleep(0)
+        try:
+            for pn_id in hass.states.async_entity_ids("persistent_notification"):
+                _LOGGER.debug("Getting persistent notification "+pn_id)
+                pn = hass.states.get(pn_id)
+                _LOGGER.debug("State is "+pn.as_dict()["state"])
+                _LOGGER.debug("Attributes are "+pn.as_dict()["attributes"]["message"])
+                await sensor.async_add_persistent_notification(pn.as_dict()["attributes"])
+        except Exception as err: 
+          _LOGGER.error("Error is" + str(err))
+          raise
+        except:
+          _LOGGER.error("Oups")
+          raise
+        _LOGGER.debug("persistent notification saved")
 
-    def restore_notifications(event):
+    async def restore_notifications(event):
         """ recreate the persistent notification based on the sensor attributes """
+        return
         _LOGGER.debug("restoring persistent notification")
         sensor = hass.data[DOMAIN][SENSOR_PLATFORM][SENSOR]
         for pn in sensor.persistent_notifications:
@@ -48,7 +62,7 @@ async def async_setup_entry(hass, entry):
             if "title" in pn:
                 service_data["title"] = pn["title"]
             #do not generate an id
-            hass.services.async_call("persistent_notification", "create", service_data, blocking=False)
+            await hass.services.async_call("persistent_notification", "create", service_data, blocking=False)
 
 
     hass.bus.async_listen("homeassistant_stop", erase_and_save_notifications)
