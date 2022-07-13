@@ -1,4 +1,6 @@
 # Persist the persistent notification after Home Assistant shutdown
+In HA behavior, the "persistent notifications" are cleared after a reboot. This custom component aim to save the notifications and restore them after a reboot.
+
 The persistent notification will be saved in a new sensor `sensor.persist_persistent_notifications` when shutting down, and restored from this sensor after HA has restarted.
 
 # Installation
