@@ -7,6 +7,7 @@ from .const import (
         SENSOR_PLATFORM,
         SENSOR
 )
+from homeassistant.components.persistent_notification import _async_get_or_create_notifications
 _LOGGER = logging.getLogger(__name__)
 
 def setup(hass, config):
@@ -25,7 +26,7 @@ async def async_setup_entry(hass, entry):
         try:
           hass.data[DOMAIN][SENSOR_PLATFORM][SENSOR].reset_persistent_notifications()
           await save_notifications(event)
-        except Exception as err: 
+        except Exception as err:
           _LOGGER.error("Error is" + str(err))
           raise
         except:
@@ -37,13 +38,14 @@ async def async_setup_entry(hass, entry):
         _LOGGER.debug("saving persistent notification")
         sensor = hass.data[DOMAIN][SENSOR_PLATFORM][SENSOR]
         try:
-            for pn_id in hass.states.async_entity_ids("persistent_notification"):
-                _LOGGER.debug("Getting persistent notification "+pn_id)
-                pn = hass.states.get(pn_id)
-                _LOGGER.debug("State is "+pn.as_dict()["state"])
-                _LOGGER.debug("Attributes are "+pn.as_dict()["attributes"]["message"])
-                await sensor.async_add_persistent_notification(pn.as_dict()["attributes"])
-        except Exception as err: 
+            notifications = _async_get_or_create_notifications(hass)
+            for notif in notifications:
+            #for pn_id in hass.states.async_entity_ids("persistent_notification"):
+                pn = notifications[notif]
+                _LOGGER.debug("Getting persistent notification "+pn["notification_id"])
+                _LOGGER.debug("Message is "+pn["message"])
+                await sensor.async_add_persistent_notification(pn["notification_id"], pn["title"], pn["message"])
+        except Exception as err:
           _LOGGER.error("Error is" + str(err))
           raise
         except:
@@ -72,6 +74,5 @@ async def async_setup_entry(hass, entry):
     hass.bus.async_listen("persistent_notifications_updated", erase_and_save_notifications)
     hass.bus.async_listen("homeassistant_start", restore_notifications)
     #restore_notifications(None)
-    
-    return True
 
+    return True
