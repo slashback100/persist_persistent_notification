@@ -66,7 +66,7 @@ class PersistPersistentNotifications(RestoreEntity):
             self._state = prev_state.state
             if "persistent_messages" in prev_state.attributes:
                 self.attr = prev_state.as_dict()["attributes"]
-                
+
         _LOGGER.debug("restore state: %s", prev_state)
         if DOMAIN not in self.hass.data:
             self.hass.data[DOMAIN] = {}
@@ -87,14 +87,14 @@ class PersistPersistentNotifications(RestoreEntity):
     def _schedule_immediate_update(self):
         self.async_schedule_update_ha_state(True)
 
-    async def async_add_persistent_notification(self, persistent_notification):
+    async def async_add_persistent_notification(self, mess_id, title, message):
         self._state += 1
         try:
-            _LOGGER.debug("Adding persistent notification: " + persistent_notification["message"])
-            self.attr["persistent_messages"].append(persistent_notification)
-        except Exception as err: 
+            _LOGGER.debug("Adding persistent notification: " + message)
+            self.attr["persistent_messages"].append({"message": message, "id": mess_id, "title": title})
+        except Exception as err:
             _LOGGER.error("Oups, error is" + str(err))
-            
+
 
     @property
     def persistent_notifications(self):
@@ -104,7 +104,7 @@ class PersistPersistentNotifications(RestoreEntity):
         self.attr["persistent_messages"].clear()
         self._state = 0
 
-
+    #unused
     async def is_new(self, notification):
         if "notification_id" in notification is not None:
             for notif in self.attr["persistent_messages"]:
@@ -117,5 +117,3 @@ class PersistPersistentNotifications(RestoreEntity):
             if notif["message"] == notification["message"]:
                 return False
         return True
-
-
